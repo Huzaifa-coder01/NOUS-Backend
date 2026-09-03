@@ -1,4 +1,5 @@
 const ChapterRepo = require("./chapterRepository");
+const { cascadeFromChapter } = require("../../../shared/courseContent/cascadeStatus");
 
 const createChapter = async (data) => {
   const chapter = await ChapterRepo.createChapter(data);
@@ -74,6 +75,11 @@ const updateChapter = async (id, data) => {
   Object.assign(chapter, updateData);
   await chapter.save();
 
+  // Turning a node off turns everything under it off as well
+  if (updateData.status === "inactive") {
+    await cascadeFromChapter(chapter._id);
+  }
+
   return chapter;
 };
 
@@ -102,6 +108,12 @@ const getChapterDetails = async (id, { onlyActive = false } = {}) => {
 const deleteChapter = async (id) => {
   if (!id) throw new Error("Chapter ID is required");
   const deleted = await ChapterRepo.deleteChapter(id);
+
+  // Children are kept, they just go inactive
+  if (deleted) {
+    await cascadeFromChapter(id);
+  }
+
   return !!deleted;
 };
 

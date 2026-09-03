@@ -4,10 +4,33 @@ const Subject = require("../subject/SubjectModel");
 require("../level/LevelModel");
 require("../course/CourseModel");
 const mongoose = require("mongoose");
+const Pdf = require("../pdf/PdfModel");
 const {
   buildKeywordQueryFromModels,
 } = require("@helperUtils/dbUtils/queryUtil");
 const { generateMeta } = require("@helperUtils/responseUtil");
+const {
+  activeChildCounts,
+  attachContentCount,
+} = require("../../../shared/courseContent/contentCounts");
+
+// The chapter screen shows three cards: syllabus, notes and past papers.
+// These are exactly the counts behind them.
+const withContentCount = async (chapters) => {
+  const ids = chapters.map((chapter) => chapter._id);
+
+  const [activeSyllabus, activeNotes, activePastPapers] = await Promise.all([
+    activeChildCounts(Pdf, "chapter", ids, { type: "syllabus" }),
+    activeChildCounts(Pdf, "chapter", ids, { type: "note" }),
+    activeChildCounts(Pdf, "chapter", ids, { type: "pastPaper" }),
+  ]);
+
+  return attachContentCount(chapters, {
+    activeSyllabus,
+    activeNotes,
+    activePastPapers,
+  });
+};
 
 // A chapter name has to stay unique inside its subject among the chapters
 // that are not deleted. The collation gives a case-insensitive exact match.
@@ -45,6 +68,11 @@ const createChapter = async (data) => {
     const subject = await findSubjectById(data.subject);
     if (!subject) {
       return { error: "subject_not_found" };
+    }
+
+    // A child added under a node that is not active starts out inactive too
+    if (subject.status !== "active") {
+      data.status = "inactive";
     }
 
     const [existingName, existingNumber] = await Promise.all([
@@ -278,13 +306,17 @@ const getChapter = async ({
   };
 
   return {
-    chapter,
+    chapter: await withContentCount(chapter),
     meta,
   };
 };
 
 const findChapterById = async (id) => {
-  return Chapter.findById(id).lean().populate(populateParents);
+  const chapter = await Chapter.findById(id).lean().populate(populateParents);
+  if (!chapter) return chapter;
+
+  const [withCount] = await withContentCount([chapter]);
+  return withCount;
 };
 
 const findChapterById_ = async (id) => {

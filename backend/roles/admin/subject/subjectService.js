@@ -1,4 +1,5 @@
 const SubjectRepo = require("./subjectRepository");
+const { cascadeFromSubject } = require("../../../shared/courseContent/cascadeStatus");
 
 const createSubject = async (data) => {
   const subject = await SubjectRepo.createSubject(data);
@@ -10,6 +11,7 @@ const getSubject = async ({
   limit,
   keyword,
   status,
+  courseId,
   levelId,
   onlyActiveParents,
 }) => {
@@ -21,6 +23,7 @@ const getSubject = async ({
     skip,
     keyword,
     status,
+    courseId,
     levelId,
     onlyActiveParents,
   });
@@ -63,6 +66,11 @@ const updateSubject = async (id, data) => {
   Object.assign(subject, updateData);
   await subject.save();
 
+  // Turning a node off turns everything under it off as well
+  if (updateData.status === "inactive") {
+    await cascadeFromSubject(subject._id);
+  }
+
   return subject;
 };
 
@@ -90,6 +98,12 @@ const getSubjectDetails = async (id, { onlyActive = false } = {}) => {
 const deleteSubject = async (id) => {
   if (!id) throw new Error("Subject ID is required");
   const deleted = await SubjectRepo.deleteSubject(id);
+
+  // Children are kept, they just go inactive
+  if (deleted) {
+    await cascadeFromSubject(id);
+  }
+
   return !!deleted;
 };
 

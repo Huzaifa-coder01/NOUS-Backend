@@ -1,4 +1,5 @@
 const LevelRepo = require("./levelRepository");
+const { cascadeFromLevel } = require("../../../shared/courseContent/cascadeStatus");
 
 const createLevel = async (data) => {
   const level = await LevelRepo.createLevel(data);
@@ -63,6 +64,11 @@ const updateLevel = async (id, data) => {
   Object.assign(level, updateData);
   await level.save();
 
+  // Turning a node off turns everything under it off as well
+  if (updateData.status === "inactive") {
+    await cascadeFromLevel(level._id);
+  }
+
   return level;
 };
 
@@ -86,6 +92,12 @@ const getLevelDetails = async (id, { onlyActive = false } = {}) => {
 const deleteLevel = async (id) => {
   if (!id) throw new Error("Level ID is required");
   const deleted = await LevelRepo.deleteLevel(id);
+
+  // Children are kept, they just go inactive
+  if (deleted) {
+    await cascadeFromLevel(id);
+  }
+
   return !!deleted;
 };
 

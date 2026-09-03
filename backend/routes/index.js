@@ -40,6 +40,11 @@ router.use("/subjects", require("../roles/admin/subject/subjectRoutes"));
 //chapters
 router.use("/chapters", require("../roles/admin/chapter/chapterRoutes"));
 
+//pdfs: past papers and syllabus are admin uploaded, notes are student uploaded
+router.use("/past-papers", require("../roles/admin/pdf/pastPaperRoutes"));
+router.use("/syllabus", require("../roles/admin/pdf/syllabusRoutes"));
+router.use("/notes", require("../roles/admin/pdf/noteRoutes"));
+
 //leads
 // router.use("/engagement", require("../commonModules/appEngagement/engagementEventsRoutes"));
 

@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+  getMe,
   register,
   login,
   loginTest,
@@ -83,6 +84,9 @@ router.post("/verify-otp/phone", verifyOtpRateLimiter, (req, res, next) => {
   verifyOtp(req, res, next);
 });
 router.post("/reset-password", resetPasswordRateLimiter, resetPassword);
+
+// Own profile, any signed in role
+router.get("/me", auth, getMe);
 
 router.post("/logout", auth, logout);
 router.delete("/delete-account", auth, hardDeleteAccount);

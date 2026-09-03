@@ -1,4 +1,5 @@
 const CourseRepo = require("./courseRepository");
+const { cascadeFromCourse } = require("../../../shared/courseContent/cascadeStatus");
 
 const createCourse = async (data) => {
   const course = await CourseRepo.createCourse(data);
@@ -53,6 +54,11 @@ const updateCourse = async (id, data) => {
   Object.assign(course, updateData);
   await course.save();
 
+  // Turning a node off turns everything under it off as well
+  if (updateData.status === "inactive") {
+    await cascadeFromCourse(course._id);
+  }
+
   return course;
 };
 
@@ -73,6 +79,12 @@ const getCourseDetails = async (id, { onlyActive = false } = {}) => {
 const deleteCourse = async (id) => {
   if (!id) throw new Error("Course ID is required");
   const deleted = await CourseRepo.deleteCourse(id);
+
+  // Children are kept, they just go inactive
+  if (deleted) {
+    await cascadeFromCourse(id);
+  }
+
   return !!deleted;
 };
 

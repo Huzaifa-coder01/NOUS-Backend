@@ -1,6 +1,7 @@
 const Subject = require("./SubjectModel");
 const Level = require("../level/LevelModel");
 const Chapter = require("../chapter/ChapterModel");
+const Pdf = require("../pdf/PdfModel");
 // Registers the Course model, the nested level.course populate needs it
 require("../course/CourseModel");
 const mongoose = require("mongoose");
@@ -13,13 +14,16 @@ const {
   attachContentCount,
 } = require("../../../shared/courseContent/contentCounts");
 
-// Active chapters of a subject
+// The subject screen lists chapters and a past papers entry, so it needs both
 const withContentCount = async (subjects) => {
   const ids = subjects.map((subject) => subject._id);
 
-  const activeChapters = await activeChildCounts(Chapter, "subject", ids);
+  const [activeChapters, activePastPapers] = await Promise.all([
+    activeChildCounts(Chapter, "subject", ids),
+    activeChildCounts(Pdf, "subject", ids, { type: "pastPaper" }),
+  ]);
 
-  return attachContentCount(subjects, { activeChapters });
+  return attachContentCount(subjects, { activeChapters, activePastPapers });
 };
 
 // A subject name has to stay unique inside its level among the subjects
@@ -45,6 +49,11 @@ const createSubject = async (data) => {
     const level = await findLevelById(data.level);
     if (!level) {
       return { error: "level_not_found" };
+    }
+
+    // A child added under a node that is not active starts out inactive too
+    if (level.status !== "active") {
+      data.status = "inactive";
     }
 
     const existingSubject = await findSubjectByName(data.level, data.name);
@@ -122,6 +131,7 @@ const getSubject = async ({
   skip,
   keyword,
   status,
+  courseId,
   levelId,
   onlyActiveParents,
 }) => {
@@ -131,6 +141,18 @@ const getSubject = async ({
     pipeline.push({
       $match: {
         level: new mongoose.Types.ObjectId(levelId),
+      },
+    });
+  }
+
+  // Narrowing by course needs the level ids of that course first
+  if (courseId && !levelId) {
+    const levelIds = await Level.find({ course: courseId })
+      .select("_id")
+      .lean();
+    pipeline.push({
+      $match: {
+        level: { $in: levelIds.map((l) => l._id) },
       },
     });
   }
@@ -203,10 +225,16 @@ const getSubject = async ({
   const subject = result[0]?.data || [];
   const totalFiltered = result[0]?.totalFiltered?.[0]?.count || 0;
 
-  // Counts stay scoped to the level when the list is filtered by one
+  // Counts stay scoped to the node the list is filtered by
   const countFilter = {
     ...(levelId && { level: new mongoose.Types.ObjectId(levelId) }),
   };
+  if (courseId && !levelId) {
+    const levelIds = await Level.find({ course: courseId })
+      .select("_id")
+      .lean();
+    countFilter.level = { $in: levelIds.map((l) => l._id) };
+  }
 
   const [totalRecord, active, inactive, deleted] = await Promise.all([
     Subject.countDocuments({ ...countFilter }),

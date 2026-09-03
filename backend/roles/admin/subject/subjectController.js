@@ -16,7 +16,7 @@ const createSubject = async (req, res) => {
   if (
     !validateParams(req, res, {
       rawData: ["levelId", "name"],
-      objectIdFields: ["levelId"],
+      objectIdFields: ["courseId", "levelId"],
     })
   )
     return;
@@ -62,12 +62,12 @@ const createSubject = async (req, res) => {
 
 const getSubject = async (req, res) => {
   const { page, limit } = parsePaginationParams(req);
-  let { keyword, status, levelId } = req.query;
+  let { keyword, status, courseId, levelId } = req.query;
   const isAdmin = req.user.userType === "admin";
 
   if (
     !validateParams(req, res, {
-      objectIdFields: ["levelId"],
+      objectIdFields: ["courseId", "levelId"],
       enumFields: { status: SUBJECT_STATUSES },
     })
   )
@@ -84,6 +84,7 @@ const getSubject = async (req, res) => {
       limit,
       keyword,
       status,
+      courseId,
       levelId,
       onlyActiveParents: !isAdmin,
     });

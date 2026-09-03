@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NOUS Backend",
-    "description": "NOUS backend API. Base URL, tokens and ids live in collection variables.\n\nHappy path for a fresh run: Auth > Register, Resend OTP (captures {{otp}} in dev), Verify OTP (captures {{token}}), then Login. Admin requests need the admin token from Auth > Login (admin), which also needs the x-admin-access-token header.\n\nContent APIs run top down: Courses > Levels > Subjects > Chapters. Each create captures its id into a collection variable, so the child folders work without editing anything.\n\nAuth is collection level bearer {{token}}, public endpoints override it with No Auth.",
+    "description": "NOUS backend API. Base URL, tokens and ids live in collection variables.\n\nHappy path for a fresh run: Auth > Register, Resend OTP (captures {{otp}} in dev), Verify OTP (captures {{token}}), then Login. Admin requests need the admin token from Auth > Login (admin), which also needs the x-admin-access-token header.\n\nContent APIs run top down: Courses > Levels > Subjects > Chapters. Each create captures its id into a collection variable, so the child folders work without editing anything.\n\nAuth is collection level bearer {{token}}, public endpoints override it with No Auth.\n\nContent rules baked into these requests: everything a student sees is active, the admin owns courses/levels/subjects/chapters/past papers/syllabus, and a student may only upload notes. Making a node inactive (or deleting it) pushes every descendant to inactive, deletes never cascade as deletes. Every PDF name is unique across the whole system.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -15,6 +15,472 @@
     ]
   },
   "item": [
+    {
+      "name": "Student Flow",
+      "description": "The student journey in order: courses > levels > subjects > chapters, then past papers at subject level, and syllabus / past papers / notes inside a chapter. Each step stores the first row's id, so running the folder top to bottom needs no manual input. Run Auth > Login (student) first.",
+      "item": [
+        {
+          "name": "1. Active courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Student landing screen. Only active courses come back, whatever is asked for."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"courseId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"courseId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Levels of the selected course",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/levels?courseId={{courseId}}&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "levels"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Student picked a course. Active levels of that course only."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"levelId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"levelId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Subjects of the selected course + level",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects?courseId={{courseId}}&levelId={{levelId}}&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subjects"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"subjectId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"subjectId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4a. Chapters of the selected subject",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/chapters?subjectId={{subjectId}}&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chapters"
+              ],
+              "query": [
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Subject screen shows chapters and a Past Papers entry, see 4b."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"chapterId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"chapterId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4b. Past papers at subject level",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/past-papers?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Past Papers tapped straight from the subject: everything under course + level + subject, including past papers that are tagged to a chapter."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"pastPaperId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"pastPaperId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5a. Chapter card - Syllabus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/syllabus?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&chapterId={{chapterId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "chapterId",
+                  "value": "{{chapterId}}"
+                }
+              ]
+            },
+            "description": "Syllabus card inside a chapter."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"syllabusId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"syllabusId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5b. Chapter card - Past papers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/past-papers?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&chapterId={{chapterId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "chapterId",
+                  "value": "{{chapterId}}"
+                }
+              ]
+            },
+            "description": "Past Papers card inside a chapter: narrowed to that chapter only."
+          },
+          "response": []
+        },
+        {
+          "name": "5c. Chapter card - Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&chapterId={{chapterId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "chapterId",
+                  "value": "{{chapterId}}"
+                }
+              ]
+            },
+            "description": "Notes card inside a chapter. Shows notes uploaded by every student, not just this one."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "const rows = (res && res.data) || [];",
+                  "if (rows.length) { pm.collectionVariables.set(\"noteId\", rows[0]._id); }",
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "pm.test(\"rows returned\", () => pm.expect(rows.length, \"noteId\").to.be.above(0));",
+                  "pm.test(\"everything is active\", () => rows.forEach(r => pm.expect(r.status).to.eql(\"active\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Upload a note (student)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"My motion notes\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes"
+              ]
+            },
+            "description": "The only thing a student may upload. Upload the PDF through /upload/cloudinary first, then pass its file key here. It becomes active straight away, so every student browsing this chapter sees it. Names are unique across all PDFs in the system."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data._id) { pm.collectionVariables.set(\"noteId\", res.data._id); }",
+                  "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. My uploaded notes (student)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes?chapterId={{chapterId}}&mine=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "chapterId",
+                  "value": "{{chapterId}}"
+                },
+                {
+                  "key": "mine",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Same notes endpoint narrowed to the signed in student's own uploads, for a My notes screen. A student cannot pass uploadedBy to read someone else's, it is ignored."
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [
@@ -274,6 +740,38 @@
                   "  console.log(\"adminToken =\", res.data.token);",
                   "}",
                   "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My profile (any role)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "The signed in user's own profile. This is what a client calls on relaunch to rehydrate the session from a stored token. Password is never included."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.expect(pm.response.code).to.eql(200));",
+                  "const res = pm.response.json();",
+                  "pm.test(\"no password\", () => pm.expect(JSON.stringify(res.data)).to.not.include(\"$2a$\"));"
                 ]
               }
             }
@@ -1246,7 +1744,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/subjects?page=1&limit=10&keyword=&status=&levelId={{levelId}}",
+              "raw": "{{baseUrl}}/subjects?courseId={{courseId}}&page=1&limit=10&keyword=&status=&levelId={{levelId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1254,6 +1752,10 @@
                 "subjects"
               ],
               "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
                 {
                   "key": "page",
                   "value": "1"
@@ -1276,7 +1778,7 @@
                 }
               ]
             },
-            "description": "Rows carry contentCount { activeChapters } and the level with its course nested."
+            "description": "Rows carry contentCount { activeChapters } and the level with its course nested. contentCount is { activeChapters, activePastPapers }, which is exactly what the subject screen lists."
           },
           "response": []
         },
@@ -1437,7 +1939,7 @@
                 }
               ]
             },
-            "description": "Sorted by chapterNumber ascending. Rows carry the full subject > level > course chain."
+            "description": "Sorted by chapterNumber ascending. Rows carry the full subject > level > course chain. Each row carries contentCount { activeSyllabus, activeNotes, activePastPapers } - the numbers behind the three cards on the chapter screen, so no extra call is needed."
           },
           "response": []
         },
@@ -1504,6 +2006,516 @@
               "path": [
                 "chapters",
                 "{{chapterId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Past Papers",
+      "item": [
+        {
+          "name": "Create past paper - subject level (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"name\": \"Physics 2023 paper 1\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/past-papers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers"
+              ]
+            },
+            "description": "chapterId is optional for past papers. Left out, the paper sits on the subject."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data._id) { pm.collectionVariables.set(\"pastPaperId\", res.data._id); }",
+                  "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create past paper - chapter level (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion 2023 paper\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/past-papers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data._id) { pm.collectionVariables.set(\"pastPaperId\", res.data._id); }",
+                  "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List past papers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/past-papers?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&chapterId=&status=&keyword=&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "chapterId",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "keyword",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Admin may pass status active | inactive | deleted, a student is always forced to active. meta.pdfCount carries totalRecord/active/inactive/deleted."
+          },
+          "response": []
+        },
+        {
+          "name": "Past paper details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/past-papers/{{pastPaperId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers",
+                "{{pastPaperId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update past paper (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Physics 2023 paper 1\",\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/past-papers/{{pastPaperId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers",
+                "{{pastPaperId}}"
+              ]
+            },
+            "description": "status accepts active | inactive only."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete past paper (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/past-papers/{{pastPaperId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "past-papers",
+                "{{pastPaperId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Syllabus",
+      "item": [
+        {
+          "name": "Create syllabus (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion syllabus\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/syllabus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus"
+              ]
+            },
+            "description": "A syllabus PDF always belongs to a chapter, course/level/subject are derived from it."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data._id) { pm.collectionVariables.set(\"syllabusId\", res.data._id); }",
+                  "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List syllabus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/syllabus?courseId={{courseId}}&levelId={{levelId}}&subjectId={{subjectId}}&chapterId={{chapterId}}&status=&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                },
+                {
+                  "key": "levelId",
+                  "value": "{{levelId}}"
+                },
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}"
+                },
+                {
+                  "key": "chapterId",
+                  "value": "{{chapterId}}"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Syllabus details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/syllabus/{{syllabusId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus",
+                "{{syllabusId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update syllabus (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Motion syllabus\",\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/syllabus/{{syllabusId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus",
+                "{{syllabusId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete syllabus (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/syllabus/{{syllabusId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "syllabus",
+                "{{syllabusId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notes (admin management)",
+      "item": [
+        {
+          "name": "List all student notes (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes?courseId=&levelId=&subjectId=&chapterId=&uploadedBy=&status=&keyword=&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": ""
+                },
+                {
+                  "key": "levelId",
+                  "value": ""
+                },
+                {
+                  "key": "subjectId",
+                  "value": ""
+                },
+                {
+                  "key": "chapterId",
+                  "value": ""
+                },
+                {
+                  "key": "uploadedBy",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "keyword",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Admin management view. Every row carries the full hierarchy (course, level, subject, chapter) plus the student who uploaded it. uploadedBy filters to one student."
+          },
+          "response": []
+        },
+        {
+          "name": "Note details (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes",
+                "{{noteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update note (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Renamed note\",\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes",
+                "{{noteId}}"
+              ]
+            },
+            "description": "Only an admin may edit or deactivate a note, a student can just upload."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete note (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{noteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notes",
+                "{{noteId}}"
               ]
             }
           },
@@ -3287,6 +4299,26 @@
     },
     {
       "key": "fileName",
+      "value": ""
+    },
+    {
+      "key": "pastPaperId",
+      "value": ""
+    },
+    {
+      "key": "syllabusId",
+      "value": ""
+    },
+    {
+      "key": "noteId",
+      "value": ""
+    },
+    {
+      "key": "pdfFileKey",
+      "value": ""
+    },
+    {
+      "key": "pdfFileUrl",
       "value": ""
     }
   ]

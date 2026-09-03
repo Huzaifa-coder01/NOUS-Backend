@@ -49,6 +49,11 @@ const createLevel = async (data) => {
       return { error: "course_not_found" };
     }
 
+    // A child added under a node that is not active starts out inactive too
+    if (course.status !== "active") {
+      data.status = "inactive";
+    }
+
     const existingLevel = await findLevelByName(data.course, data.name);
     if (existingLevel) {
       return { error: "level_already_exists_in_this_course" };

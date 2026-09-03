@@ -1077,6 +1077,48 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// The signed in user's own profile. Every role may read itself, which is what
+// a client calls on relaunch to rehydrate the session behind its token.
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).lean();
+
+    if (!user) {
+      return sendResponse({
+        res,
+        statusCode: 404,
+        translationKey: "account_not_found",
+      });
+    }
+
+    if (["deleted", "suspended"].includes(user.accountState?.status)) {
+      return sendResponse({
+        res,
+        statusCode: 403,
+        translationKey: "your_account_2",
+      });
+    }
+
+    // toJSON strips the password and stamps the media base url on profileIcon
+    const userObject = User.prototype.toJSON.call(user, user);
+
+    return sendResponse({
+      res,
+      statusCode: 200,
+      translationKey: "profile_fetched_successfully",
+      data: formatUserResponse(userObject, null, [], ["resetToken"]),
+    });
+  } catch (error) {
+    const readableError = getReadableErrorMessage(error);
+    return sendResponse({
+      res,
+      statusCode: readableError.statusCode,
+      translationKey: readableError.message,
+      error,
+    });
+  }
+};
+
 const logout = async (req, res) => {
   try {
     const { deviceId } = req.body;
@@ -1464,6 +1506,7 @@ const checkUserNameExists = async (req, res) => {
 };
 
 module.exports = {
+  getMe,
   createAdmin,
   register,
   companyDetails,

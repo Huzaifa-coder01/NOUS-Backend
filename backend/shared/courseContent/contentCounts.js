@@ -19,14 +19,21 @@ const rowsToMap = (rows) =>
 
 /**
  * Active direct children per parent, e.g. active levels of a course.
+ * extraMatch narrows the children further, e.g. { type: "syllabus" } for PDFs.
  */
-const activeChildCounts = async (childModel, parentField, parentIds) => {
+const activeChildCounts = async (
+  childModel,
+  parentField,
+  parentIds,
+  extraMatch = {},
+) => {
   const ids = toObjectIds(parentIds);
   if (!ids.length) return {};
 
   const rows = await childModel.aggregate([
     {
       $match: {
+        ...extraMatch,
         [parentField]: { $in: ids },
         status: "active",
       },
