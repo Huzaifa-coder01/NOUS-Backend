@@ -27,12 +27,10 @@ const { findByIdAndUpdate } = require("../subAdmins/subAdminsRepository");
 
 const APP_NAME = "CoachCritic App";
 
-const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" }) => {
+const getAllUsers = async ({ page, limit, keyword, status, userType }) => {
   const skip = (page - 1) * limit;
 
-  const matchStage = {
-    "verificationStatus.email": "verified",
-  };
+  const matchStage = {};
 
   if (status) {
     matchStage["accountState.status"] = status;
@@ -40,7 +38,7 @@ const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" })
     matchStage["accountState.status"] = { $ne: "deleted" };
   }
 
-  if (userType !== undefined) {
+  if (userType) {
     matchStage["accountState.userType"] = userType;
   }
 
@@ -53,83 +51,14 @@ const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" })
     Object.assign(matchStage, keywordMatch);
   }
 
+  const countByStatus = (value) => [
+    { $match: { "accountState.status": value } },
+    { $count: "count" },
+  ];
+
   const pipeline = [
     {
       $match: matchStage,
-    },
-    {
-      $lookup: {
-        from: "reviews",
-        localField: "_id",
-        foreignField: "objectUser",
-        pipeline: [
-          {
-            $project: {
-              rating: 1,
-            },
-          },
-        ],
-        as: "reviews",
-      },
-    },
-
-    {
-      $addFields: {
-        averageRating: {
-          $round: [
-            {
-              $ifNull: [{ $avg: "$reviews.rating" }, 0],
-            },
-            1,
-          ],
-        },
-        totalReviews: {
-          $size: "$reviews",
-        },
-      },
-    },
-
-    {
-      $lookup: {
-        from: "coachonboardingresponses", // or "usersonboardingresponses"
-        localField: "_id",
-        foreignField: "user",
-        as: "coachOnboardingResponse",
-      },
-    },
-
-    {
-      $unwind: {
-        path: "$coachOnboardingResponse",
-        preserveNullAndEmptyArrays: false,
-      },
-    },
-
-    {
-      $lookup: {
-        from: "credentials",
-        localField: "coachOnboardingResponse.credentials",
-        foreignField: "_id",
-        as: "coachOnboardingResponse.credentials",
-      },
-    },
-
-    {
-      $lookup: {
-        from: "specialities",
-        localField: "coachOnboardingResponse.specialities",
-        foreignField: "_id",
-        as: "coachOnboardingResponse.specialities",
-      },
-    },
-
-    {
-      $lookup: {
-        from: "coachingstyles",
-        localField: "coachOnboardingResponse.coachingStyle",
-        foreignField: "_id",
-        as: "coachOnboardingResponse.coachingStyle",
-      },
     },
 
     {
@@ -139,22 +68,18 @@ const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" })
             $project: {
               _id: 1,
               name: 1,
+              username: 1,
               email: 1,
+              phoneNumber: 1,
+              gender: 1,
+              dob: 1,
               accountState: 1,
+              verificationStatus: 1,
               profileIcon: 1,
+              timezone: 1,
+              language: 1,
+              lastSignedIn: 1,
               createdAt: 1,
-              averageRating: 1,
-              totalReviews: 1,
-
-              coachOnboardingResponse: {
-                _id: "$coachOnboardingResponse._id",
-                location: "$coachOnboardingResponse.location",
-                acceptingWork: "$coachOnboardingResponse.acceptingWork",
-                priceRange: "$coachOnboardingResponse.priceRange",
-                credentials: "$coachOnboardingResponse.credentials",
-                specialities: "$coachOnboardingResponse.specialities",
-                coachingStyle: "$coachOnboardingResponse.coachingStyle",
-              },
             },
           },
 
@@ -179,49 +104,10 @@ const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" })
           },
         ],
 
-        pending: [
-          {
-            $match: {
-              "accountState.status": "pending",
-            },
-          },
-          {
-            $count: "count",
-          },
-        ],
-
-        active: [
-          {
-            $match: {
-              "accountState.status": "active",
-            },
-          },
-          {
-            $count: "count",
-          },
-        ],
-
-        rejected: [
-          {
-            $match: {
-              "accountState.status": "rejected",
-            },
-          },
-          {
-            $count: "count",
-          },
-        ],
-
-        suspended: [
-          {
-            $match: {
-              "accountState.status": "suspended",
-            },
-          },
-          {
-            $count: "count",
-          },
-        ],
+        pending: countByStatus("pending"),
+        active: countByStatus("active"),
+        inactive: countByStatus("inactive"),
+        suspended: countByStatus("suspended"),
       },
     },
   ];
@@ -232,19 +118,29 @@ const getAllUsers = async ({ page, limit, keyword, status, userType = "coach" })
 
   const users = data.users || [];
   const totalFiltered = data.total?.[0]?.count || 0;
-
   const pending = data.pending?.[0]?.count || 0;
   const active = data.active?.[0]?.count || 0;
-  const rejected = data.rejected?.[0]?.count || 0;
+  const inactive = data.inactive?.[0]?.count || 0;
   const suspended = data.suspended?.[0]?.count || 0;
+
+  // Counts of every user of this type, not just the page
+  const countFilter = userType
+    ? { "accountState.userType": userType }
+    : {};
+  const [totalRecord, deleted] = await Promise.all([
+    User.countDocuments(countFilter),
+    User.countDocuments({ ...countFilter, "accountState.status": "deleted" }),
+  ]);
 
   const meta = generateMeta(page, limit, totalFiltered);
 
   meta.usersCount = {
+    totalRecord,
     pending,
     active,
-    rejected,
+    inactive,
     suspended,
+    deleted,
   };
 
   return {

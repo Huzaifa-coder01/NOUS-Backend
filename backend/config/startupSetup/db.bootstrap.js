@@ -120,7 +120,7 @@ async function runDBBootstrap() {
                 return;
             }
             const res = await createUserViaUtility({
-                name: "Tempy Admin",
+                name: "Nous Admin",
                 email: process.env.BOOTSTRAP_ADMIN_EMAIL,
                 password: process.env.BOOTSTRAP_ADMIN_PASSWORD,
                 userType: "admin",
@@ -130,7 +130,7 @@ async function runDBBootstrap() {
             });
 
             if (res?.success)
-                console.log("✅ Admin user created/promoted")
+                console.log("✅ Admin user created")
         }
 
     } catch (err) {
