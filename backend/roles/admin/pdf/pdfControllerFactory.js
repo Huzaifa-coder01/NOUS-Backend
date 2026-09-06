@@ -24,12 +24,22 @@ const NOT_FOUND_ERRORS = [
  * @param {string} config.key             translation key prefix, e.g. past_paper
  * @param {boolean} config.chapterRequired syllabus and notes need a chapter
  * @param {boolean} config.studentCanCreate only notes are student uploadable
+ * @param {string[]} [config.readTypes]     what the listing shows, defaults to
+ *   just `type`. The syllabus screen also shows the notes students uploaded.
  */
-const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => {
+const makePdfController = ({
+  type,
+  key,
+  chapterRequired,
+  studentCanCreate,
+  readTypes,
+}) => {
   const notFoundKey = `${key}_not_found`;
+  // Writes always stay on the owning type, only reads may span types
+  const listTypes = readTypes || type;
 
   const create = async (req, res) => {
-    const { name, file, fileUrl, subjectId, chapterId } = req.body;
+    const { name, fileName, subjectId, chapterId } = req.body;
     const isAdmin = req.user.userType === "admin";
 
     if (!isAdmin && !studentCanCreate) {
@@ -40,7 +50,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
       });
     }
 
-    const rawData = ["name", "file"];
+    const rawData = ["name", "fileName"];
     rawData.push(chapterRequired ? "chapterId" : "subjectId");
 
     if (
@@ -55,8 +65,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
       const pdf = await PdfService.createPdf({
         type,
         name,
-        file,
-        fileUrl,
+        fileName,
         subjectId,
         chapterId,
         uploadedBy: req.user._id,
@@ -122,7 +131,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
 
     try {
       const { pdfs, meta } = await PdfService.getPdfs({
-        type,
+        type: listTypes,
         page,
         limit,
         keyword,
@@ -165,7 +174,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
       return;
 
     try {
-      const pdf = await PdfService.getPdfDetails(id, type, {
+      const pdf = await PdfService.getPdfDetails(id, listTypes, {
         onlyActive: !isAdmin,
       });
 
@@ -196,7 +205,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
 
   const update = async (req, res) => {
     const { id } = req.params;
-    const { name, file, fileUrl, status } = req.body;
+    const { name, fileName, status } = req.body;
 
     if (
       !validateParams(req, res, {
@@ -210,8 +219,7 @@ const makePdfController = ({ type, key, chapterRequired, studentCanCreate }) => 
     try {
       const updated = await PdfService.updatePdf(id, type, {
         name,
-        file,
-        fileUrl,
+        fileName,
         status,
       });
 

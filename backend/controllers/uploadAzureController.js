@@ -107,8 +107,7 @@ const uploadFilesToAzure = async (files) => {
     });
 
     return {
-      file: filename,
-      fileUrl: `${process.env.AZURE_STORAGE_BASE_URL}${filename}`,
+      fileName: filename,
       fileExtension: fileExtension,
     };
   });

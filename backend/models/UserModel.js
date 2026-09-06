@@ -549,33 +549,8 @@ userSchema.methods.toJSON = function (userData) {
     userObject = { ...this };
   }
 
-  const baseUrl = `${process.env.MEDIA_BASE_URL || process.env.S3_BASE_URL}`;
-
-  // Attach base URL to profileIcon
-  if (userObject.profileIcon && !userObject.profileIcon.startsWith("http")) {
-    userObject.profileIcon = baseUrl + userObject.profileIcon;
-  } else if (!userObject.profileIcon) {
-    userObject.profileIcon = baseUrl + "noimage.png";
-  }
-
-  //attach baseUrl with company logo and cover image
-  if (
-    userObject.companyDetails &&
-    userObject.companyDetails.logo &&
-    !userObject.companyDetails.logo.startsWith("http")
-  ) {
-    userObject.companyDetails.logo =
-      baseUrl + userObject.companyDetails.logo;
-  }
-
-  if (
-    userObject.companyDetails &&
-    userObject.companyDetails.coverImage &&
-    !userObject.companyDetails.coverImage.startsWith("http")
-  ) {
-    userObject.companyDetails.coverImage =
-      baseUrl + userObject.companyDetails.coverImage;
-  }
+  // profileIcon is handed back as the stored file name. The client composes the
+  // url from the media base url, so moving storage never strands old rows.
 
   delete userObject.password;
 
@@ -587,13 +562,6 @@ userSchema.methods.toJSON = function (userData) {
   return userObject;
 };
 
-userSchema.methods.addBaseUrlToProfileIcon = function (user) {
-  const baseUrl = `${process.env.MEDIA_BASE_URL || process.env.S3_BASE_URL}`;
-  if (user.profileIcon && !user.profileIcon.startsWith("http")) {
-    user.profileIcon = baseUrl + user.profileIcon;
-  }
-  return { ...user, profileIcon: user.profileIcon };
-};
 userSchema.index(
   {
     email: 1,

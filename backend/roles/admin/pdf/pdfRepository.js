@@ -65,7 +65,11 @@ const getPdfs = async ({
   chapterId,
   uploadedBy,
 }) => {
-  const match = { type };
+  // type may be a single value or a list, e.g. the syllabus screen shows
+  // syllabus PDFs together with the notes students uploaded.
+  const typeMatch = Array.isArray(type) ? { $in: type } : type;
+
+  const match = { type: typeMatch };
 
   if (courseId) match.course = new mongoose.Types.ObjectId(courseId);
   if (levelId) match.level = new mongoose.Types.ObjectId(levelId);
@@ -117,8 +121,8 @@ const getPdfs = async ({
   const pdfs = result[0]?.data || [];
   const totalFiltered = result[0]?.totalFiltered?.[0]?.count || 0;
 
-  // Counts stay inside the same type and the same node the list is filtered by
-  const countFilter = { type };
+  // Counts stay inside the same type(s) and the same node the list is filtered by
+  const countFilter = { type: typeMatch };
   if (courseId) countFilter.course = new mongoose.Types.ObjectId(courseId);
   if (levelId) countFilter.level = new mongoose.Types.ObjectId(levelId);
   if (subjectId) countFilter.subject = new mongoose.Types.ObjectId(subjectId);
@@ -140,22 +144,25 @@ const getPdfs = async ({
   return { pdfs, meta };
 };
 
+const typeFilter = (type) =>
+  type ? { type: Array.isArray(type) ? { $in: type } : type } : {};
+
 const findPdfById = async (id, type) => {
-  const filter = { _id: id };
-  if (type) filter.type = type;
-  return Pdf.findOne(filter).lean().populate(HIERARCHY_POPULATE);
+  return Pdf.findOne({ _id: id, ...typeFilter(type) })
+    .lean()
+    .populate(HIERARCHY_POPULATE);
 };
 
 const findPdfById_ = async (id, type) => {
-  const filter = { _id: id };
-  if (type) filter.type = type;
-  return Pdf.findOne(filter);
+  return Pdf.findOne({ _id: id, ...typeFilter(type) });
 };
 
 const deletePdf = async (id, type) => {
-  const filter = { _id: id, status: { $ne: "deleted" } };
-  if (type) filter.type = type;
-  return Pdf.findOneAndUpdate(filter, { status: "deleted" }, { new: true });
+  return Pdf.findOneAndUpdate(
+    { _id: id, status: { $ne: "deleted" }, ...typeFilter(type) },
+    { status: "deleted" },
+    { new: true },
+  );
 };
 
 module.exports = {

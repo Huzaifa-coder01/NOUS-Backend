@@ -33,16 +33,13 @@ const uploadFile = (req, res) => {
                     translationKey: "no_file",
                 });
             } else {
-                const baseUrl = `${process.env.MEDIA_BASE_URL || process.env.S3_BASE_URL}`;
-
                 sendResponse({
                     res,
                     statusCode: 200,
                     translationKey: "file_uploaded",
                     data: {
                         message: "File uploaded successfully!",
-                        file: `${req.file.filename}`,
-                        fileUrl: `${baseUrl}${req.file.filename}`,
+                        fileName: `${req.file.filename}`,
                     },
                 });
             }

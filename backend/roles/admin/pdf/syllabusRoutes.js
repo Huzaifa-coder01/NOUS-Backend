@@ -9,12 +9,15 @@ router.use(auth);
 
 const rateLimiter = createRateLimiter("Syllabus");
 
-// A syllabus PDF always belongs to a chapter
+// A syllabus PDF always belongs to a chapter. The listing also carries the
+// notes students uploaded for that chapter, each row says which it is via
+// its type field. Creating, editing and deleting here stays syllabus only.
 const syllabus = makePdfController({
   type: "syllabus",
   key: "syllabus",
   chapterRequired: true,
   studentCanCreate: false,
+  readTypes: ["syllabus", "note"],
 });
 
 router.post("/", roleMiddleware(["admin"]), rateLimiter, syllabus.create);

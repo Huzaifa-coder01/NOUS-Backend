@@ -41,8 +41,8 @@ const uploadBackupToS3 = async (backupPath) => {
         const uploadedFiles = await uploadFilesToAzure([fileObj]);
 
         uploadedFiles.forEach((uploadedFile) => {
-            // console.log(`Backup uploaded to S3: ${uploadedFile.fileUrl}`);
-            console.log(`Database Backup uploaded to Azure: ${uploadedFile.fileUrl}`);
+            // console.log(`Backup uploaded to S3: ${uploadedFile.fileName}`);
+            console.log(`Database Backup uploaded to Azure: ${uploadedFile.fileName}`);
         });
     } catch (err) {
         console.error("Error uploading backup to Azure:", err);

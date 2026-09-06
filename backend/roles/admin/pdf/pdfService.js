@@ -12,8 +12,7 @@ const {
 const createPdf = async ({
   type,
   name,
-  file,
-  fileUrl,
+  fileName,
   subjectId,
   chapterId,
   uploadedBy,
@@ -48,8 +47,7 @@ const createPdf = async ({
   const pdf = await PdfRepo.createPdf({
     type,
     name: String(name).trim(),
-    file,
-    fileUrl,
+    fileName,
     course: chain.course._id,
     level: chain.level._id,
     subject: chain.subject._id,
@@ -97,7 +95,7 @@ const updatePdf = async (id, type, data) => {
     return { error: "pdf_not_found" };
   }
 
-  const allowedFields = ["name", "file", "fileUrl", "status"];
+  const allowedFields = ["name", "fileName", "status"];
   const updateData = {};
   for (const key of allowedFields) {
     if (data[key] !== undefined) {

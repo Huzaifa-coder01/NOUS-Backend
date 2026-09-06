@@ -247,7 +247,7 @@
   "chapterId_required": "chapterId is required",
   "chapter_does_not_belong_to_this_subject": "This chapter does not belong to the given subject",
   "only_admin_can_perform_this_action": "Only an admin can perform this action",
-  "file_required": "file is required",
   "type_required": "type is required",
-  "profile_fetched_successfully": "Profile fetched successfully"
+  "profile_fetched_successfully": "Profile fetched successfully",
+  "fileName_required": "fileName is required"
 }

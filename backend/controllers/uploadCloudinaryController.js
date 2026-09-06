@@ -60,8 +60,7 @@ const uploadBuffer = (cloudinary, file, publicId, folder) =>
 /**
  * Uploads the multer files to Cloudinary.
  * Keeps the response shape the S3 uploader used, so clients do not change:
- *   file           relative key, e.g. "nous/6f1e....png"
- *   fileUrl        absolute delivery URL
+ *   fileName       stored file name, e.g. "nous/6f1e....png"
  *   fileExtension  ".png"
  */
 const uploadFilesToCloudinary = async (files) => {
@@ -82,8 +81,7 @@ const uploadFilesToCloudinary = async (files) => {
     const key = `${result.public_id}${format}`;
 
     return {
-      file: key,
-      fileUrl: result.secure_url || result.url,
+      fileName: key,
       fileExtension: format,
       publicId: result.public_id,
       resourceType: result.resource_type,

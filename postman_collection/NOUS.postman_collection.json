@@ -298,7 +298,7 @@
                 }
               ]
             },
-            "description": "Syllabus card inside a chapter."
+            "description": "Syllabus card inside a chapter. The list also includes the notes students uploaded for this chapter, distinguished by the type field."
           },
           "response": [],
           "event": [
@@ -418,7 +418,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"My motion notes\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"My motion notes\",\n  \"fileName\": \"{{pdfFileName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2028,7 +2028,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"name\": \"Physics 2023 paper 1\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"name\": \"Physics 2023 paper 1\",\n  \"fileName\": \"{{pdfFileName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2073,7 +2073,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion 2023 paper\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "raw": "{\n  \"subjectId\": \"{{subjectId}}\",\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion 2023 paper\",\n  \"fileName\": \"{{pdfFileName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2243,7 +2243,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion syllabus\",\n  \"file\": \"{{pdfFileKey}}\",\n  \"fileUrl\": \"{{pdfFileUrl}}\"\n}",
+              "raw": "{\n  \"chapterId\": \"{{chapterId}}\",\n  \"name\": \"Motion syllabus\",\n  \"fileName\": \"{{pdfFileName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2319,7 +2319,8 @@
                   "value": "10"
                 }
               ]
-            }
+            },
+            "description": "Syllabus PDFs for the chapter, together with the notes students uploaded there. Each row carries a type field of syllabus or note, and note rows carry uploadedBy. Creating, editing and deleting through /syllabus stays syllabus only, notes are managed through /notes."
           },
           "response": []
         },
@@ -2551,7 +2552,7 @@
                 "cloudinary"
               ]
             },
-            "description": "Multipart field name is files, up to 10. Returns { file, fileUrl, fileExtension, publicId, resourceType }. Save the relative `file` key on records like profileIcon."
+            "description": "Multipart field name is files, up to 10. Returns { fileName, fileExtension, publicId, resourceType }. Save the returned fileName on records like profileIcon or a PDF."
           },
           "response": [],
           "event": [
@@ -4314,11 +4315,7 @@
       "value": ""
     },
     {
-      "key": "pdfFileKey",
-      "value": ""
-    },
-    {
-      "key": "pdfFileUrl",
+      "key": "pdfFileName",
       "value": ""
     }
   ]

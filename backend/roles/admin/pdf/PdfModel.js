@@ -24,17 +24,13 @@ const pdfSchema = new mongoose.Schema(
       trim: true,
       required: [true, "name_required"],
     },
-    // Relative key from the upload API, e.g. "nous/dev/<id>.pdf"
-    file: {
+    // Stored file name from the upload API, e.g. "nous/dev/<id>.pdf".
+    // The delivery URL is composed by the client from the media base url,
+    // the same way profileIcon works, so no absolute url is persisted.
+    fileName: {
       type: String,
       trim: true,
-      required: [true, "file_required"],
-    },
-    // Absolute delivery URL from the upload API
-    fileUrl: {
-      type: String,
-      trim: true,
-      default: "",
+      required: [true, "fileName_required"],
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,

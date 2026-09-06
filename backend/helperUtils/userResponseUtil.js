@@ -2,7 +2,7 @@
 
 const { notify } = require("@appEngagement/engagementEventsRoutes");
 const { createVerificationLink } = require("../models/UserModel");
-const { getFullImageUrl } = require("@helperUtils/imageHelper");
+const { getFileName } = require("@helperUtils/imageHelper");
 
 const formatUserResponse = (
   userObject,
@@ -20,7 +20,7 @@ const formatUserResponse = (
             orignalSubAdminId: userObject.orignalSubAdminId,
           }
         : null;
-  const pIcon = getFullImageUrl(userObject?.profileIcon) || null;
+  const pIcon = getFileName(userObject?.profileIcon) || null;
   const userType = userObject.accountState?.userType;
   // Construct basicInfo cleanly using conditionals
   const basicInfo = {
@@ -132,7 +132,7 @@ const formatUserResponse = (
 //attach url to profile icon without any other formatting
 const formatUserProfileIconOnly = (userObject) => {
   if (!userObject) return null;
-  const pIcon = getFullImageUrl(userObject?.profileIcon) || null;
+  const pIcon = getFileName(userObject?.profileIcon) || null;
   userObject.profileIcon = pIcon;
   return userObject;
 };
