@@ -4,8 +4,19 @@ const {
   validateParams,
   getReadableErrorMessage,
 } = require("../../../helperUtils/responseUtil");
+const { getFileName } = require("../../../helperUtils/imageHelper");
 const PdfService = require("./pdfService");
 const { PDF_STATUSES, PDF_UPDATABLE_STATUSES } = require("./PdfModel");
+
+// Clients written before the rename send the stored name as `file`, or only a
+// full `fileUrl`. Map either onto `fileName` so those requests keep working.
+const acceptLegacyFileKey = (req) => {
+  if (req.body.fileName) return;
+  const legacy = [req.body.file, req.body.fileUrl].find(
+    (value) => typeof value === "string" && value.trim() !== ""
+  );
+  if (legacy) req.body.fileName = getFileName(legacy);
+};
 
 const NOT_FOUND_ERRORS = [
   "course_not_found",
@@ -39,6 +50,7 @@ const makePdfController = ({
   const listTypes = readTypes || type;
 
   const create = async (req, res) => {
+    acceptLegacyFileKey(req);
     const { name, fileName, subjectId, chapterId } = req.body;
     const isAdmin = req.user.userType === "admin";
 
@@ -205,6 +217,7 @@ const makePdfController = ({
 
   const update = async (req, res) => {
     const { id } = req.params;
+    acceptLegacyFileKey(req);
     const { name, fileName, status } = req.body;
 
     if (

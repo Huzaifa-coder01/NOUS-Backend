@@ -4,7 +4,7 @@
   "description": "",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=dev PORT=4019 nodemon backend/server.js",
+    "dev": "node init && cross-env NODE_ENV=dev PORT=4019 nodemon backend/server.js",
     "dev1": "cross-env NODE_ENV=dev PORT=4020 node backend/server.js",
     "prod": "cross-env NODE_ENV=prod nodemon backend/server.js",
     "mobileapps": "cross-env NODE_ENV=mobileapps node backend/server.js",

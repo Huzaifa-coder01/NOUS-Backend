@@ -2562,9 +2562,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "if (res && res.data && res.data.file) {",
-                  "  pm.collectionVariables.set(\"fileKey\", res.data.file);",
-                  "  console.log(\"fileKey =\", res.data.file);",
+                  "if (res && res.data && res.data.fileName) {",
+                  "  pm.collectionVariables.set(\"fileKey\", res.data.fileName);",
+                  "  pm.collectionVariables.set(\"pdfFileName\", res.data.fileName);",
+                  "  console.log(\"fileName =\", res.data.fileName);",
                   "}",
                   "pm.test(\"status is ok\", () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
                 ]
