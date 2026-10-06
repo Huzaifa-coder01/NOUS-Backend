@@ -20,7 +20,7 @@ const serviceAccount = require("../secretAssets/serviceAccountKey.json");
 try {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://coachcritic-50810.firebaseio.com",
+    databaseURL: "https://nous-50810.firebaseio.com",
   });
 
   // Log after successful initialization

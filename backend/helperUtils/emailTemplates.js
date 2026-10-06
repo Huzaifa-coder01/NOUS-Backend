@@ -1,5 +1,5 @@
 // emailTemplate.js
-const APP_NAME = "CoachCritic App"; // Define the app name as a constant at the top
+const APP_NAME = "NOUS App"; // Define the app name as a constant at the top
 const currentYear = new Date().getFullYear(); // Dynamically get the current year
 
 const OTP_PURPOSE_CONFIG = {
@@ -520,7 +520,7 @@ const stripeEmailTemplate = ({ name, link }) => `
          <p style="font-family: 'Montserrat', sans-serif; font-size: 15px;">
         Best Regards,
         <br>
-         CoachCritic Team
+         NOUS Team
         </p>
 		</td>
 	</tr>

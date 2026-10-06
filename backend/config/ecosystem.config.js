@@ -21,7 +21,7 @@ if (!fs.existsSync(PM2_LOG_DIR)) {
 module.exports = {
   apps: [
     {
-      name: "coachcritic-backend",
+      name: "nous-backend",
       script: "backend/server.js",
 
       exec_mode: "cluster",

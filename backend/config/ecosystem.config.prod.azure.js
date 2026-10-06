@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "coachcritic-backend",
+      name: "nous-backend",
 
       script: "backend/server.js",
 

@@ -98,7 +98,7 @@ app.set("trust proxy", 1);
  */
 app.get("/api", (req, res) => {
   res.json({
-    name: "CoachCritic API",
+    name: "NOUS API",
     version: "v1",
     status: "running",
   });

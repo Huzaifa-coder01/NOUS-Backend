@@ -15,7 +15,7 @@ const sendEmailViaBrevo = async (emails, subject, body, config = {}) => {
   // Initial assignment from parameters
   sendSmtpEmail.subject = subject;
   sendSmtpEmail.htmlContent = body;
-  sendSmtpEmail.sender = { email: "noreply@coachcritic.com", name: "CoachCritic" };
+  sendSmtpEmail.sender = { email: "noreply@nous.com", name: "NOUS" };
 
   // Ensure to field is dynamically updated
   sendSmtpEmail.to = emails.map(email => ({ email }));

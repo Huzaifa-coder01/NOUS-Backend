@@ -1,5 +1,5 @@
 // emailTemplate.js
-const APP_NAME = "CoachCritic App"; // Define the app name as a constant at the top
+const APP_NAME = "NOUS App"; // Define the app name as a constant at the top
 const currentYear = new Date().getFullYear(); // Dynamically get the current year
 
 const reservationConfirmationEmailTemplate = ({

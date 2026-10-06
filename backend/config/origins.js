@@ -3,13 +3,13 @@ const isDev =
   process.env.NODE_ENV === "mobileapps";
 
 const PROD_ORIGINS = [
-  "https://coachcritic.com",
-  "https://www.coachcritic.com",
-  "https://dev.coachcritic.com",
-  "https://www.dev.coachcritic.com",
+  "https://nous.com",
+  "https://www.nous.com",
+  "https://dev.nous.com",
+  "https://www.dev.nous.com",
   "http://localhost:4003",
   "http://localhost:3030",
-  "https://coachcritic.vercel.app",
+  "https://coachcritnousic.vercel.app",
   "http://192.168.13.67:4003"
 ];
 

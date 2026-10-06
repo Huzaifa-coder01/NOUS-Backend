@@ -25,7 +25,7 @@ const { createOrSkipDevice } = require("../../../models/Devices");
 const { formatAthletes } = require("./formator/formatAthletes");
 const { findByIdAndUpdate } = require("../subAdmins/subAdminsRepository");
 
-const APP_NAME = "CoachCritic App";
+const APP_NAME = "NOUS App";
 
 const getAllUsers = async ({ page, limit, keyword, status, userType }) => {
   const skip = (page - 1) * limit;

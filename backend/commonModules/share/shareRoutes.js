@@ -128,12 +128,12 @@ router.get("/share", async (req, res) => {
     await saveUserReferralData(id, req.ip);
 
     // Deep link for app
-    const appLink = `coachcritic://share?objectId=${objectId}&objectType=${objectType}&referrer=${id}`;
+    const appLink = `nous://share?objectId=${objectId}&objectType=${objectType}&referrer=${id}`;
 
-    const iosFallback = "https://apps.apple.com/app/coachcritic/id1234567890";
+    const iosFallback = "https://apps.apple.com/app/nous/id1234567890";
 
     const androidFallback =
-      "https://play.google.com/store/apps/details?id=com.coachcritic";
+      "https://play.google.com/store/apps/details?id=com.nous";
 
     return res.send(`
       <!DOCTYPE html>
@@ -141,7 +141,7 @@ router.get("/share", async (req, res) => {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Opening CoachCritic...</title>
+          <title>Opening NOUS...</title>
           <script>
             function openApp() {
               const appLink = '${appLink}';
@@ -164,7 +164,7 @@ router.get("/share", async (req, res) => {
                 ) {
                   window.location = iosFallback;
                 } else {
-                  window.location = 'https://coachcritic.com';
+                  window.location = 'https://nous.com';
                 }
               }, 1500);
             }
@@ -174,7 +174,7 @@ router.get("/share", async (req, res) => {
         </head>
         <body>
           <p style="text-align:center;margin-top:40vh;font-family:sans-serif;">
-            Opening CoachCritic...
+            Opening NOUS...
           </p>
         </body>
       </html>
